@@ -1,0 +1,242 @@
+import React from 'react';
+import PropTypes from 'prop-types';
+import { Input } from '@wdpui/react-gel';
+import {
+  ErrorIcon,
+  InputErrorWrapper,
+  ErrorText,
+} from '../../../../style/style';
+
+const InputDate = ({ input, type, placeholder,min,max,meta: { touched, error } }) => (
+    <span>
+      {(type === 'text' ||
+        type === 'Date') && (
+        <Input {...input} type={type} placeholder={placeholder} min={min} max={max} />
+      )}
+      {touched &&
+        (error && (
+          <InputErrorWrapper>
+            <ErrorIcon size="xsmall" />
+            <ErrorText styling="danger">{error}</ErrorText>
+          </InputErrorWrapper>
+        ))}
+    </span>
+  );
+  InputDate.propTypes = {
+    input: PropTypes.object.isRequired,
+    type: PropTypes.string.isRequired,
+    meta: PropTypes.object.isRequired,
+    placeholder: PropTypes.string,
+  };
+  
+  InputDate.defaultProps = {
+    input: PropTypes.object.isRequired,
+    type: PropTypes.string.isRequired,
+    meta: PropTypes.object.isRequired,
+    placeholder: null,
+  };
+  
+  export default InputDate;
+  
+  
+  .............................................................................................
+  
+  
+  import React from 'react';
+import { shallow } from 'enzyme';
+import InputDate from './InputDate';
+import { withTheme } from '../../../../../utils/jest/TestUtils';
+import "../../../../setupTests"
+
+describe('InputForm', () => {
+  it('should render', () => {
+    const component = withTheme(<InputDate meta={['touched', 'error']} />);
+    const wrapper = shallow(component).dive();
+    expect(wrapper).toMatchSnapshot();
+  });
+});
+
+
+..............................................................................................
+
+import React, { Component } from 'react';
+import styled from 'styled-components';
+import { Box } from 'grid-styled';
+import { Field } from 'redux-form';
+import { required, dayDate } from '../../helpers/index';
+import { InputDate } from '../../components/forms';
+
+const DateContainer = styled(Box)`
+  border: 1px solid ${({ theme }) => theme.color.border};
+  border-radius: 3px;
+  margin-left: 1px;
+  with: 100;
+`;
+
+export class DateComponats extends Component {
+  constructor(props) {
+    super(props);
+
+    this.state = {
+      error: '',
+    }
+  }
+
+  onblur = e => {
+    const date = e.target.value.split('/');
+    const day = date[0];
+    const month = date[1];
+    const year = date[2];
+
+    const today = new Date();
+     if(today.getFullYear() < year || 2000 > year) {
+      
+      this.props.logError('Enter Valid Year');
+    }
+    if(day === ''){
+      return
+    }
+    if(month === ''){
+     return
+    }
+    if(month > 12 || month < 1){
+      
+      this.props.logError('Invalid Month');
+     }
+     if(day < 1){
+ 
+      this.props.logError('Invalid Day');
+     }
+    if (
+      today.getFullYear() === year ||
+      today.getFullYear() <= year
+    ) {
+      if (
+        today.getMonth() + 1 < month ||
+        today.getMonth() + 1 === month
+      ) {
+        
+        this.props.logError('Enter Valid Year Or Month');
+      }
+      if (today.getMonth() + 1 == month) {
+        if (today.getDate() < day) {
+          
+          this.props.logError('Invalid Day');
+        }
+      }
+    }
+    
+    if (month < 8) {
+      if (month % 2 == 0) {
+        if (month == 2) {
+          if (
+            (year % 4 == 0 && year % 100 != 0) ||
+            year % 400 == 0
+          ) {
+            if (day > 29) {
+              
+              this.props.logError('Invalid Day');
+            } else if (day > 28) {
+              
+              this.props.logError('Invalid Day');
+            }
+          }
+        }
+        if (day > 29) {
+          
+          this.props.logError('Enter Valid Day Or Month');
+        }
+      }
+    }
+    if (month >= 8) {
+      if (month % 2 == 1) {
+        if (day == 31) {
+          this.props.logError('Enter Valid Day');
+        }
+      }
+    }
+
+  };
+  onChangeDay = e => {
+    
+    this.props.logError('')
+  };
+
+  render() {
+    return (
+      <Box>
+        <DateContainer>
+          <Field
+              name="date"
+              type="text"
+              placeholder="DD/MM/YYYY"
+              component={InputDate}
+              validate={[required, dayDate]}
+              onChange={this.onChangeDay}
+              onBlur={this.onblur}
+             />
+        </DateContainer>
+        <font color="red">{this.props.dateError}</font>
+      </Box>
+    );
+  }
+}
+
+export default DateComponats;
+
+
+
+..............................................................................
+
+
+
+
+import React from 'react';
+import { shallow } from 'enzyme';
+import DateComponent from './DateComponats';
+import "../../setupTests"
+
+describe('DateComponent', () => {
+    it('should render', () => {
+        const component = (
+            <DateComponent />
+        );
+        const wrapper = shallow(component);
+        expect(wrapper).toMatchSnapshot();
+    });
+    it('should contain date container', () => {
+        const component = (
+            <DateComponent />
+        );
+        const wrapper = shallow(component).dive();
+        expect(wrapper.find({ 'data-test': 'date-container' }).length).toBe(1);
+    });
+    it('date container should contain field named day', () => {
+        const component = (<DateComponent />);
+        const wrapper = shallow(component).dive();
+        expect(wrapper.find({ 'data-test': 'date-container' }).dive().find({ 'name': 'day' }).length).toBe(1);
+    })
+    it('date container should contain field named month', () => {
+        const component = (<DateComponent />);
+        const wrapper = shallow(component).dive();
+        //expect(wrapper.find({ 'data-test': 'date-container' }).dive().find({ 'name': 'month' }).length).toBe(1);
+        console.log(wrapper.find({ 'data-test': 'date-container' }).dive().find({ 'name': 'month' }).length);
+    })
+    it('date container should contain field named year', () => {
+        const component = (<DateComponent />);
+        const wrapper = shallow(component).dive();
+        expect(wrapper.find({ 'data-test': 'date-container' }).dive().find({ 'name': 'year' }).length).toBe(1);
+    })
+
+});
+
+
+
+
+validation hlp
+
+export const dayDate = value =>
+value > 31 || value < 1?`invalid Day`:'';
+
+export const dayMonth = value =>
+value > 12 || value < 1?`invalid month`:'';
